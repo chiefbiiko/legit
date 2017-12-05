@@ -5,28 +5,72 @@ var legit = require('./index')
 
 var tape = require('tape')
 
-var pdf = path.join(__dirname, 'FastCDC.pdf')
-// var sam = path.join(__dirname, 'sample.txt')
-// var bam = path.join(__dirname, 'sam.txt')
+tape('verfifier is a simple passthru/identity stream', function (t) {
 
-// var transformer = new stream.Transform({
-//   transform(chunk, _, next) {
-//     this.push(chunk)
-//     next()
-//   }
-// })
-
-tape('internally split chunks can be combined to original', function (t) {
   var verifier = legit()
-  var readStream = fs.createReadStream(pdf)
+  var readStreamA = fs.createReadStream(__filename)
+  var readStreamB = fs.createReadStream(__filename)
 
-  t.plan(1)
+  readStreamA.pipe(verifier).pipe(concat(function (bufA) {
+    readStreamB.pipe(concat(function (bufB) {
 
-  readStream.pipe(verifier).pipe(concat(function (buf) {
+      t.same(bufA, bufB, 'concatenated passthru should be identical')
 
-    t.same(verifier._debug, buf, 'internal n passthru bufs should be identical')
-
-    // t.end()
+      t.end()
+    }))
   }))
+
+})
+
+tape('zero mutation', function (t) {
+
+  var verifier = legit()
+  var readStreamA = fs.createReadStream(__filename)
+  var readStreamB = fs.createReadStream(__filename)
+
+  var bufferlistA = []
+  var bufferlistB = []
+  var pending = 2
+
+  function finalProof () {
+    if (--pending) return
+
+    t.same(bufferlistA, bufferlistB, 'chunks should be identical')
+
+    t.end()
+  }
+
+  readStreamA.pipe(verifier)
+
+  verifier.on('data', function (chunk) {
+    bufferlistA.push(chunk)
+  })
+
+  readStreamB.on('data', function (chunk) {
+    bufferlistB.push(chunk)
+  })
+
+  readStreamA.on('end', finalProof)
+  readStreamB.on('end', finalProof)
+
+})
+
+tape('flowing hash is a 32 byte buffer', function (t) {
+
+  var verifier = legit()
+  var readStream = fs.createReadStream(__filename)
+
+  readStream.pipe(verifier)
+
+  verifier.on('data', function (_) {
+
+    t.ok(Buffer.isBuffer(verifier._accu), 'hash always is a buffer')
+    t.is(verifier._accu.length, 32, 'hash should always be 32 bytes long')
+
+  })
+
+  verifier.on('end', function () {
+    t.end()
+  })
 
 })
