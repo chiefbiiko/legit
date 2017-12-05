@@ -1,0 +1,30 @@
+{
+  "name": "legit",
+  "version": "0.0.0",
+  "description": "A duplex stream that verifies files on the fly",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiefbiiko/legit.git"
+  },
+  "keywords": [
+    "file",
+    "verification",
+    "validation",
+    "hash"
+  ],
+  "author": "Noah Anabiik Schwarz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chiefbiiko/legit/issues"
+  },
+  "homepage": "https://github.com/chiefbiiko/legit#readme",
+  "devDependencies": {
+    "concat-stream": "^1.6.0",
+    "tape": "^4.8.0"
+  },
+  "dependencies": {}
+}
