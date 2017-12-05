@@ -18,8 +18,7 @@ function FlowHash (opts) { // callback?
 
   this._queue = Buffer.alloc(this._opts.queueSize)    // internal buffer
   this._offset = 0                                    // write offset in queue
-  this._accu = Buffer.alloc(32)                       // flowing hash buffer
-  this._debug = Buffer.alloc(0)                       // dev debug
+  this._accu = Buffer.alloc(0)                        // flowing hash buffer
 }
 
 util.inherits(FlowHash, stream.Transform)
@@ -30,6 +29,7 @@ FlowHash.prototype._transform = function transform (chunk, _, next) {
   var remaining = this._opts.queueSize - this._offset
   var boundary = remaining
   var chunks = []
+
   if (chunk.length > remaining) { // splitting chunks to 64KiB, !tail
     chunks.push(chunk.slice(0, boundary)) // push head
     while (boundary <= chunk.length) {    // push body and tail
@@ -50,9 +50,6 @@ FlowHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chunks) {
   chunks.forEach(function (chunk) {
     // chunk must fit into internal 64KiB queue !!!
     this._offset = chunk.copy(this._queue, this._offset) + this._offset
-    // this._queue = Buffer.concat([ this._queue, chunk ]) // same as above
-    // this._offset = chunk.length + this._offset
-    // console.log('queue length',this._queue.length)
     // maybe hash and clear queue
     if (this._offset === this._opts.queueSize) {
       this._accu = hash(Buffer.concat([

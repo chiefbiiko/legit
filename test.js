@@ -25,8 +25,8 @@ tape('verfifier is a simple passthru/identity stream', function (t) {
 tape('zero mutation', function (t) {
 
   var verifier = legit()
-  var readStreamA = fs.createReadStream(__filename)
-  var readStreamB = fs.createReadStream(__filename)
+  var readStreamA = fs.createReadStream(path.join(__dirname, 'FastCDC.pdf'))
+  var readStreamB = fs.createReadStream(path.join(__dirname, 'FastCDC.pdf'))
 
   var bufferlistA = []
   var bufferlistB = []
@@ -55,21 +55,18 @@ tape('zero mutation', function (t) {
 
 })
 
-tape('flowing hash is a 32 byte buffer', function (t) {
+tape('flowing hash is a 32 byte buffer by default', function (t) {
 
   var verifier = legit()
   var readStream = fs.createReadStream(__filename)
 
   readStream.pipe(verifier)
 
-  verifier.on('data', function (_) {
+  verifier.on('finish', function () {
+    console.log('FLOWHASH',verifier._accu)
+    t.ok(Buffer.isBuffer(verifier._accu), 'hash is a buffer')
+    t.is(verifier._accu.length, 32, 'hash should be 32 bytes long')
 
-    t.ok(Buffer.isBuffer(verifier._accu), 'hash always is a buffer')
-    t.is(verifier._accu.length, 32, 'hash should always be 32 bytes long')
-
-  })
-
-  verifier.on('end', function () {
     t.end()
   })
 
