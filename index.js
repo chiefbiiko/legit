@@ -28,28 +28,28 @@ FlowHash.prototype._transform = function transform (chunk, _, next) {
 
   var remaining = this._opts.queueSize - this._offset
   var boundary = remaining
-  var chunks = []
+  var chops = []
 
-  if (chunk.length > remaining) { // splitting chunks to 64KiB, !tail
-    chunks.push(chunk.slice(0, boundary)) // push head
+  if (chunk.length > remaining) { // splitting chops to 64KiB, !tail
+    chops.push(chunk.slice(0, boundary)) // push head
     while (boundary <= chunk.length) {    // push body and tail
-      chunks.push(chunk.slice(boundary, boundary + this._opts.queueSize))
+      chops.push(chunk.slice(boundary, boundary + this._opts.queueSize))
       boundary += this._opts.queueSize
     }
   } else {
-    chunks.push(chunk)
+    chops.push(chunk)
   }
 
   // copy from chunk to queue and maybe hash and flush
-  this._copyAndMaybeHash(chunks)
+  this._copyAndMaybeHash(chops)
 
   next()
 }
 
-FlowHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chunks) {
-  chunks.forEach(function (chunk) {
-    // chunk must fit into internal 64KiB queue !!!
-    this._offset = chunk.copy(this._queue, this._offset) + this._offset
+FlowHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
+  chops.forEach(function (chop) {
+    // chop must fit into internal 64KiB queue !!!
+    this._offset = chop.copy(this._queue, this._offset) + this._offset
     // maybe hash and clear queue
     if (this._offset === this._opts.queueSize) {
       this._accu = hash(Buffer.concat([
