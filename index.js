@@ -5,12 +5,8 @@ var util = require('util')
 
 function noop () {}
 
-function hash (buf, _opts) {
-  return crypto.createHash(_opts.hash).update(buf).digest()
-}
-
 function PipeHash (opts, callback) {
-  if (!(this instanceof PipeHash)) return new PipeHash(opts)
+  if (!(this instanceof PipeHash)) return new PipeHash(opts, callback)
   stream.Transform.call(this)
 
   if (typeof opts === 'function') {
@@ -29,10 +25,11 @@ function PipeHash (opts, callback) {
   this._accu = Buffer.alloc(0)                          // rolling hash buffer
 
   this.on('finish', function () { // total stream payload is shorter than win
-    if (!this._accu.length) this._accu = hash(this._window, this._opts)
-    this.emit('pipe-hash', this._accu)
-    callback(null, this._accu)
-    // this._clear(true)
+    if (!this._accu.length) this._accu = this._hash(this._window, this._opts)
+    var fingerprint = Buffer.from(this._accu)
+    this._clear(true)
+    this.emit('pipe-hash', fingerprint)
+    callback(null, fingerprint)
   })
 
 }
@@ -68,15 +65,17 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
     this._offset = chop.copy(this._window, this._offset) + this._offset
     // maybe hash and clear window
     if (this._offset === this._opts.windowSize) {
-      this._accu = hash(Buffer.concat([
+      this._accu = this._hash(Buffer.concat([
          this._accu,
-         hash(this._window, this._opts)
+         this._hash(this._window, this._opts)
        ]), this._opts)
        this._clear()
-       // this._window.fill(0x00) // clearing window & resetting write offset
-       // this._offset = 0
     }
   }, this)
+}
+
+PipeHash.prototype._hash = function hash (buf) {
+  return crypto.createHash(this._opts.hash).update(buf).digest()
 }
 
 PipeHash.prototype._clear = function clear (everything) {
