@@ -51,6 +51,7 @@ FlowHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
     // chop must fit into internal 64KiB queue !!!
     this._offset = chop.copy(this._queue, this._offset) + this._offset
     // maybe hash and clear queue
+    console.log('queue full???', this._offset === this._opts.queueSize)
     if (this._offset === this._opts.queueSize) {
       this._accu = hash(Buffer.concat([
          this._accu,
