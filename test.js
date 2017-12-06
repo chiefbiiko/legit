@@ -63,7 +63,7 @@ tape('flowing hash is a 32 byte buffer by default', function (t) {
   readStream.pipe(verifier)
 
   verifier.on('finish', function () {
-    console.log('FLOWHASH',verifier._accu)
+    
     t.ok(Buffer.isBuffer(verifier._accu), 'hash is a buffer')
     t.is(verifier._accu.length, 32, 'hash should be 32 bytes long')
 

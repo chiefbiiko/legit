@@ -1,5 +1,5 @@
 {
-  "name": "legit",
+  "name": "pipe-hash",
   "version": "0.0.0",
   "description": "A duplex stream that verifies files on the fly",
   "main": "index.js",
@@ -8,20 +8,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chiefbiiko/legit.git"
+    "url": "git+https://github.com/chiefbiiko/pipe-hash.git"
   },
   "keywords": [
     "file",
     "verification",
     "validation",
-    "hash"
+    "hash",
+    "stream",
+    "pipe"
   ],
   "author": "Noah Anabiik Schwarz",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/chiefbiiko/legit/issues"
+    "url": "https://github.com/chiefbiiko/pipe-hash/issues"
   },
-  "homepage": "https://github.com/chiefbiiko/legit#readme",
+  "homepage": "https://github.com/chiefbiiko/pipe-hash#readme",
   "devDependencies": {
     "concat-stream": "^1.6.0",
     "tape": "^4.8.0"
