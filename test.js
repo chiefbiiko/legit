@@ -1,6 +1,8 @@
 var fs = require('fs')
 var path = require('path')
 var concat = require('concat-stream')
+var tar = require('tar-fs')
+var zlib = require('zlib')
 var pipeHash = require('./index')
 
 var tape = require('tape')
@@ -25,8 +27,8 @@ tape('PipeHash is a simple passthru/identity stream', function (t) {
 tape('zero mutation', function (t) {
 
   var verifier = pipeHash()
-  var readStreamA = fs.createReadStream(path.join(__dirname, 'FastCDC.pdf'))
-  var readStreamB = fs.createReadStream(path.join(__dirname, 'FastCDC.pdf'))
+  var readStreamA = tar.pack(path.join(__dirname, 'node_modules'))
+  var readStreamB = tar.pack(path.join(__dirname, 'node_modules'))
 
   var bufferlistA = []
   var bufferlistB = []
@@ -90,6 +92,29 @@ tape('PipeHash should be cleared once it emits "fingerprint"', function (t) {
          'accumulator should be a length-zero buffer')
 
     t.end()
+  })
+
+})
+
+tape('PipeHash has a public async fingerprint method', function (t) {
+
+  var verifierA = pipeHash()
+  var verifierB = pipeHash()
+
+  var readStream = fs.createReadStream(__filename)
+
+  readStream.pipe(zlib.createGzip()).pipe(verifierA)
+
+  verifierA.on('fingerprint', function (fingerprintA) {
+
+    verifierB.fingerprint(__filename, function (err, fingerprintB) {
+      if (err) t.end(err)
+
+      t.same(fingerprintB, fingerprintA, 'fingerprints should be the same')
+
+      t.end()
+    })
+
   })
 
 })

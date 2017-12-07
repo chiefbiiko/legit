@@ -2,6 +2,9 @@ var crypto = require('crypto')
 var fs = require('fs')
 var stream = require('stream')
 var util = require('util')
+var zlib = require('zlib')
+var pump = require('pump')
+var tar = require('tar-fs')
 
 function noop () {}
 
@@ -47,6 +50,7 @@ PipeHash.prototype._chop = function chop (chunk) {
   var remaining = this._opts.windowSize - this._offset
   var boundary = remaining
   var chops = []
+
   if (chunk.length > remaining) { // splitting chops to 64KiB, !tail
     chops.push(chunk.slice(0, boundary))  // push head
     while (boundary <= chunk.length) {    // push body and tail
@@ -56,13 +60,14 @@ PipeHash.prototype._chop = function chop (chunk) {
   } else {
     chops.push(chunk)
   }
+
   return chops
 }
 
 PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
-  chops.forEach(function (chop) {
-    // chops are at most of size 64KiB
+  chops.forEach(function (chop) { // chops are at most of size 64KiB
     this._offset = chop.copy(this._window, this._offset) + this._offset
+
     // maybe hash and clear window
     if (this._offset === this._opts.windowSize) {
       this._accu = this._hash(Buffer.concat([
@@ -71,6 +76,7 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
       ]), this._opts)
       this._clear()
     }
+
   }, this)
 }
 
@@ -84,6 +90,49 @@ PipeHash.prototype._clear = function clear (everything) {
   this._offset = 0
 }
 
+PipeHash.prototype.fingerprint =
+  function fingerprint (filepath, opts, callback) {
 
+  if (typeof opts === 'function') {
+    callback = opts
+    opts = {}
+  }
+
+  if (!opts) opts = {}
+  if (!callback) callback = noop
+
+  var self = this
+
+  fs.lstat(filepath, function (err, stats) {
+    if (err) return callback (err)
+
+    var tail
+    var readStream = stats.isDirectory()
+      ? tar.pack(filepath) : fs.createReadStream(filepath)
+
+    if (opts.gzip !== false) {
+      tail = zlib.createGzip()
+      pump(readStream, tail)
+    } else {
+      tail = readStream
+      tail.on('error', function (err) {
+        tail.destroy(err)
+      })
+    }
+
+    tail.on('data', function (chunk) {
+      self._copyAndMaybeHash(self._chop(chunk))
+    })
+
+    tail.on('end', function () {
+      if (!self._accu.length) self._accu = self._hash(self._window, self._opts)
+      var fingerprint = Buffer.from(self._accu)
+      self._clear(true)
+      callback(null, fingerprint)
+    })
+
+  })
+
+}
 
 module.exports = PipeHash
