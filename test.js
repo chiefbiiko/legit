@@ -52,7 +52,7 @@ tape('zero mutation', function (t) {
     bufferlistB.push(chunk)
   })
 
-  readStreamA.on('end', finalProof)
+  verifier.on('end', finalProof)
   readStreamB.on('end', finalProof)
 
 })

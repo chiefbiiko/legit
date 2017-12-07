@@ -96,26 +96,29 @@ PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
     opts = {}
   }
 
+  if (this._offset || this._accu.length) return callback('i am busy')
+
   if (!opts) opts = {}
   if (!callback) callback = noop
 
   var self = this
 
   fs.lstat(file, function (err, stats) {
-    if (err) return callback (err)
+    if (err) return callback(err)
 
     var tail
-    var readStream = stats.isDirectory()
-      ? tar.pack(file) : fs.createReadStream(file)
+    var readStream
+    
+    if (stats.isDirectory()) readStream = tar.pack(file)
+    else if (stats.isFile()) readStream = fs.createReadStream(file)
+    else callback('unsupported resource')
 
     if (opts.gzip !== false) {
       tail = zlib.createGzip()
       pump(readStream, tail)
     } else {
       tail = readStream
-      tail.on('error', function (err) {
-        tail.destroy(err)
-      })
+      tail.on('error', tail.destroy)
     }
 
     tail.on('data', function (chunk) {
