@@ -28,7 +28,7 @@ function PipeHash (opts, callback) {
   this._accu = Buffer.alloc(0)                          // rolling hash buffer
 
   this.on('finish', function () { // total stream payload shorter than win?
-    if (!this._accu.length) this._accu = this._hash(this._window, this._opts)
+    if (!this._accu.length) this._accu = this._hash(this._window)
     var fingerprint = Buffer.from(this._accu)
     this._clear(true)
     this.emit('fingerprint', fingerprint)
@@ -70,10 +70,10 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
 
     // maybe hash and clear window
     if (this._offset === this._opts.windowSize) {
-      this._accu = this._hash(Buffer.concat([
-        this._accu,
-        this._hash(this._window, this._opts)
-      ]), this._opts)
+      var cur = this._hash(this._window)
+      this._accu = this._hash(
+        Buffer.concat([ this._accu, cur ], this._accu.length + cur.length)
+      )
       this._clear()
     }
 
@@ -125,7 +125,7 @@ PipeHash.prototype.fingerprint =
     })
 
     tail.on('end', function () {
-      if (!self._accu.length) self._accu = self._hash(self._window, self._opts)
+      if (!self._accu.length) self._accu = self._hash(self._window)
       var fingerprint = Buffer.from(self._accu)
       self._clear(true)
       callback(null, fingerprint)

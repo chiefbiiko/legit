@@ -1,7 +1,7 @@
 {
   "name": "pipe-hash",
   "version": "0.0.0",
-  "description": "A duplex stream that verifies files on the fly",
+  "description": "A stream that fingerprints its passthru on the fly",
   "main": "index.js",
   "scripts": {
     "test": "tape test.js"
