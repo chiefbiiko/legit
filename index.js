@@ -65,7 +65,7 @@ PipeHash.prototype._chop = function chop (chunk) {
 }
 
 PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
-  chops.forEach(function (chop) { // chops are at most of size 64KiB
+  chops.forEach(function (chop) { // by default chops are at most of size 64KiB
     this._offset = chop.copy(this._window, this._offset) + this._offset
 
     // maybe hash and clear window
@@ -96,10 +96,10 @@ PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
     opts = {}
   }
 
-  if (this._offset || this._accu.length) return callback('i am busy')
-
   if (!opts) opts = {}
   if (!callback) callback = noop
+
+  if (this._offset || this._accu.length) return callback('i am busy')
 
   var self = this
 
@@ -108,7 +108,7 @@ PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
 
     var tail
     var readStream
-    
+
     if (stats.isDirectory()) readStream = tar.pack(file)
     else if (stats.isFile()) readStream = fs.createReadStream(file)
     else callback('unsupported resource')

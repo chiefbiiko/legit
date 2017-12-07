@@ -74,7 +74,7 @@ Create a new `PipeHash` instance. Options default to:
 
 The callback will be called after the writable side of the stream has finished and has the standard signature `callback(err, fingerprint)`. The fingerprint is a buffer.
 
-### `hashPipe.fingerprint(filepath[,opts], callback)`
+### `hashPipe.fingerprint(filepath[, opts], callback)`
 
 Get a fingerprint from a file or directory. Options default to:
 
