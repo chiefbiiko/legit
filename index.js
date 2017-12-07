@@ -90,9 +90,7 @@ PipeHash.prototype._clear = function clear (everything) {
   this._offset = 0
 }
 
-PipeHash.prototype.fingerprint =
-  function fingerprint (filepath, opts, callback) {
-
+PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
   if (typeof opts === 'function') {
     callback = opts
     opts = {}
@@ -103,12 +101,12 @@ PipeHash.prototype.fingerprint =
 
   var self = this
 
-  fs.lstat(filepath, function (err, stats) {
+  fs.lstat(file, function (err, stats) {
     if (err) return callback (err)
 
     var tail
     var readStream = stats.isDirectory()
-      ? tar.pack(filepath) : fs.createReadStream(filepath)
+      ? tar.pack(file) : fs.createReadStream(file)
 
     if (opts.gzip !== false) {
       tail = zlib.createGzip()

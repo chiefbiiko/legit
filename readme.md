@@ -34,11 +34,12 @@ For convenience you can generate a fingerpint of a file or directory by using th
 ## Usage
 
 ``` js
+var fs = require('fs')
 var pipeHash = require('pipe-hash')
 var hashPipe = pipeHash()
 
-// consuming from a net socket or something
-/*socket*/.pipe(hashPipe).pipe(/*somewhere else*/)
+// consuming a readable, net socket or something
+fs.createReadStream(__filename).pipe(hashPipe)//.pipe(somewhere_else)
 
 // get the fingerprint once the writable side of our hashPipe has finished
 hashPipe.on('fingerprint', function (fingerprint) {
@@ -79,7 +80,7 @@ Get a fingerprint from a file or directory. Options default to:
 
 ``` js
 {
-  gzip: true // gzip file and tar-packed dir streams?
+  gzip: true // gzip file and tar-packed dir streams before hashing?
 }
 ```
 
