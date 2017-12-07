@@ -62,7 +62,7 @@ tape('fingerprint hash is a 32 byte buffer by default', function (t) {
 
   readStream.pipe(verifier)
 
-  verifier.on('pipe-hash', function (fingerprint) {
+  verifier.on('fingerprint', function (fingerprint) {
 
     t.ok(Buffer.isBuffer(fingerprint), 'hash is a buffer')
     t.is(fingerprint.length, 32, 'by default hash should be 32 bytes long')
@@ -72,16 +72,15 @@ tape('fingerprint hash is a 32 byte buffer by default', function (t) {
 
 })
 
-tape('PipeHash should be cleared once it emits "pipe-hash"', function (t) {
+tape('PipeHash should be cleared once it emits "fingerprint"', function (t) {
 
   var verifier = pipeHash()
   var readStream = fs.createReadStream(__filename)
+  var allZeroWindow = Buffer.alloc(verifier._opts.windowSize, 0x00)
 
   readStream.pipe(verifier)
 
-  verifier.on('pipe-hash', function (_) {
-
-    var allZeroWindow = Buffer.alloc(verifier._opts.windowSize, 0x00)
+  verifier.on('fingerprint', function (_) {
 
     t.ok(verifier._offset === 0,
          'offset should be reset to zero')

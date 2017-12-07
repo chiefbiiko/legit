@@ -24,11 +24,11 @@ function PipeHash (opts, callback) {
   this._offset = 0                                      // write offset in win
   this._accu = Buffer.alloc(0)                          // rolling hash buffer
 
-  this.on('finish', function () { // total stream payload is shorter than win
+  this.on('finish', function () { // total stream payload shorter than win?
     if (!this._accu.length) this._accu = this._hash(this._window, this._opts)
     var fingerprint = Buffer.from(this._accu)
     this._clear(true)
-    this.emit('pipe-hash', fingerprint)
+    this.emit('fingerprint', fingerprint)
     callback(null, fingerprint)
   })
 
@@ -38,11 +38,15 @@ util.inherits(PipeHash, stream.Transform)
 
 PipeHash.prototype._transform = function transform (chunk, _, next) {
   this.push(chunk) // identity
+  // chop, then copy to window and maybe hash and flush
+  this._copyAndMaybeHash(this._chop(chunk))
+  next()
+}
 
+PipeHash.prototype._chop = function chop (chunk) {
   var remaining = this._opts.windowSize - this._offset
   var boundary = remaining
   var chops = []
-
   if (chunk.length > remaining) { // splitting chops to 64KiB, !tail
     chops.push(chunk.slice(0, boundary))  // push head
     while (boundary <= chunk.length) {    // push body and tail
@@ -52,11 +56,7 @@ PipeHash.prototype._transform = function transform (chunk, _, next) {
   } else {
     chops.push(chunk)
   }
-
-  // copy from chunk to window and maybe hash and flush
-  this._copyAndMaybeHash(chops)
-
-  next()
+  return chops
 }
 
 PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
@@ -66,10 +66,10 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
     // maybe hash and clear window
     if (this._offset === this._opts.windowSize) {
       this._accu = this._hash(Buffer.concat([
-         this._accu,
-         this._hash(this._window, this._opts)
-       ]), this._opts)
-       this._clear()
+        this._accu,
+        this._hash(this._window, this._opts)
+      ]), this._opts)
+      this._clear()
     }
   }, this)
 }
@@ -83,5 +83,7 @@ PipeHash.prototype._clear = function clear (everything) {
   this._window.fill(0x00) // clearing window & resetting write offset
   this._offset = 0
 }
+
+
 
 module.exports = PipeHash
