@@ -1,11 +1,10 @@
 var fs = require('fs')
 var path = require('path')
+var zlib = require('zlib')
 var concat = require('concat-stream')
 var tar = require('tar-fs')
-var zlib = require('zlib')
-var pipeHash = require('./index')
-
 var tape = require('tape')
+var pipeHash = require('./index')
 
 tape('PipeHash is a simple passthru/identity stream', function (t) {
 
@@ -57,7 +56,7 @@ tape('zero mutation', function (t) {
 
 })
 
-tape('fingerprint hash is a 32 byte buffer by default', function (t) {
+tape('fingerprint hash is a 64 byte buffer by default', function (t) {
 
   var verifier = pipeHash()
   var readStream = fs.createReadStream(__filename)
@@ -67,7 +66,7 @@ tape('fingerprint hash is a 32 byte buffer by default', function (t) {
   verifier.on('fingerprint', function (fingerprint) {
 
     t.ok(Buffer.isBuffer(fingerprint), 'hash is a buffer')
-    t.is(fingerprint.length, 32, 'by default hash should be 32 bytes long')
+    t.is(fingerprint.length, 64, 'by default hash should be 64 bytes long')
 
     t.end()
   })

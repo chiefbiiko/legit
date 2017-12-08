@@ -65,9 +65,9 @@ hashPipe.fingerprint(__dirname, function (err, fingerprint) {
 
 Create a new `PipeHash` instance. Options default to:
 
-```js
+``` js
 {
-  hash: 'sha256', // any name of crypto's hash functions
+  hash: 'sha512', // any name of crypto's hash functions
   windowKiB: 64   // size of the sliding window in KiB
 }
 ```

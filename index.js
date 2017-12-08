@@ -20,7 +20,7 @@ function PipeHash (opts, callback) {
   if (!callback) callback = noop
   if (!opts) opts = {}
   this._opts = opts
-  this._opts.hash = opts.hash || 'sha256'               // sha256 by default
+  this._opts.hash = opts.hash || 'sha512'               // sha512 by default
   this._opts.windowSize = 1024 * (opts.windowKiB || 64) // 64KiB by default
 
   this._window = Buffer.alloc(this._opts.windowSize)    // window
