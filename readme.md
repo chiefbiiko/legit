@@ -43,7 +43,7 @@ fs.createReadStream(__filename).pipe(hashPipe)//.pipe(somewhere_else)
 
 // get the fingerprint once the writable side of our hashPipe has finished
 hashPipe.on('fingerprint', function (fingerprint) {
-  console.log('incoming stream\'s fingerprint:', fingerprint.toString('hex'))
+  console.log('this src file\'s fingerprint:', fingerprint.toString('hex'))
   // crosscheck against a fingerprint obtained from a trusted source...
   /*...*/
 })
@@ -80,11 +80,12 @@ Get a fingerprint from a file or directory. Options default to:
 
 ``` js
 {
-  gzip: true // gzip file and tar-packed dir streams before hashing?
+  gzip: true, // gzip file and tar-packed dir streams before hashing?
+  dereference: false // follow symlinks?
 }
 ```
 
-The callback has the signature `callback(err, fingerprint)` and wil be called once the entire file/directory has been hashed. The fingerprint is a buffer.
+The callback has the signature `callback(err, fingerprint)` and will be called once the entire file/directory has been hashed. The fingerprint is a buffer.
 
 ### `hashPipe.on('fingerprint', callback)`
 

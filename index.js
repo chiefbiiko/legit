@@ -8,6 +8,10 @@ var tar = require('tar-fs')
 
 function noop () {}
 
+function stat (entry, _opts, cb) {
+  _opts.dereference ? fs.stat(entry, cb) : fs.lstat(entry, cb)
+}
+
 function PipeHash (opts, callback) {
   if (!(this instanceof PipeHash)) return new PipeHash(opts, callback)
   stream.Transform.call(this)
@@ -103,7 +107,7 @@ PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
 
   var self = this
 
-  fs.lstat(file, function (err, stats) {
+  stat(file, opts, function (err, stats) {
     if (err) return callback(err)
 
     var tail
