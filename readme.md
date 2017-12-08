@@ -21,7 +21,7 @@ npm install --save pipe-hash
 
 Basically a `PipeHash` instance is just a simple identity duplex stream. You can simply pipe streams or write buffers to it and it will pass them thru identically.
 
-Internally it processes written buffers stepwise in a rolling fashion. Therefore, it can process streams of any size as only chunks of it are held in memory at a given point in time.
+Internally it processes written buffers stepwise. Every time the internal buffer window reaches `opts.windowKiB` an accumulator hash digest is generated, and the internal buffer cleared subsequently. A fresh accumulator is computed as the hash of the concatenation of itself with the hash of the current window buffer. Therefore, it can process streams of any size as only chunks of them are held in memory at a given point in time.
 
 A `PipeHash` instance emits a fingerprint once its writable side has finished. Additionally, you can pass a callback to the constructor which likewise will be called once the writable side of the stream has finished.
 
