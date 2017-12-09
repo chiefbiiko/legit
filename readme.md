@@ -17,20 +17,6 @@ npm install --save pipe-hash
 
 ***
 
-## Details
-
-Basically a `PipeHash` instance is just a simple identity duplex stream. You can simply pipe streams or write buffers to it and it will pass them thru identically.
-
-Internally it processes written buffers stepwise. Every time the internal buffer window reaches `opts.windowKiB` an accumulator hash digest is generated, and the internal buffer cleared subsequently. A fresh accumulator is computed as the hash of the concatenation of itself with the hash of the current window buffer. Therefore, it can process streams of any size as only chunks of them are held in memory at a given point in time.
-
-A `PipeHash` instance emits a fingerprint once its writable side has finished. Additionally, you can pass a callback to the constructor which likewise will be called once the writable side of the stream has finished.
-
-You can use the stream for both generation and verfication of fingerprints.
-
-For convenience you can generate a fingerpint of a file or directory by using the public `PipeHash.prototype.fingerprint(filepath, opts, callback)` method. It internally processes the input stream indicated by filepath and calls the callback with the resulting fingerprint. Note that by default files are gzipped and directories tossed into a tarball (packed as tar archive and then gzipped) before the hashing stage. You can set `opts` to `{ gzip: false }` to prevent compression before hashing. Knowing whether a fingerprint refers to a compressed or uncompressed buffer is important for successfully verifying fingerprints. Generally, you should just stick to the defaults and use compression when juggling files.
-
-***
-
 ## Usage
 
 ``` js
@@ -90,6 +76,20 @@ The callback has the signature `callback(err, fingerprint)` and will be called o
 ### `hashPipe.on('fingerprint', callback)`
 
 Emitted once the writable side of the stream has finished. The callback has the signature `callback(fingerprint)`. The fingerprint is a buffer.
+
+***
+
+## Details
+
+Basically a `PipeHash` instance is just a simple identity duplex stream. You can simply pipe streams or write buffers to it and it will pass them thru identically.
+
+Internally it processes written buffers stepwise. Every time the internal buffer window reaches `opts.windowKiB` an accumulator hash digest is generated, and the internal buffer cleared subsequently. A fresh accumulator is computed as the hash of the concatenation of itself with the hash of the current window buffer. When pipehashing you can process streams of any size as only chunks of them are held in memory at a given point in time.
+
+A `PipeHash` instance emits a fingerprint once its writable side has finished. Additionally, you can pass a callback to the constructor which likewise will be called once the writable side of the stream has finished.
+
+You can use the stream for both generation and verfication of fingerprints.
+
+For convenience you can generate a fingerpint of a file or directory by using the public `PipeHash.prototype.fingerprint(filepath, opts, callback)` method. It internally processes the input stream indicated by filepath and calls the callback with the resulting fingerprint. Note that by default files are gzipped and directories tossed into a tarball (packed as tar archive and then gzipped) before the hashing stage. You can set `opts` to `{ gzip: false }` to prevent compression before hashing. Knowing whether a fingerprint refers to a compressed or uncompressed buffer is important for successfully verifying fingerprints. Generally, you should just stick to the defaults and use compression when juggling files.
 
 ***
 

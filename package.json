@@ -1,6 +1,6 @@
 {
   "name": "pipe-hash",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A stream that fingerprints its passthru on the fly",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,9 @@
     "validation",
     "hash",
     "stream",
-    "pipe"
+    "pipe",
+    "fingerprint",
+    "checksum"
   ],
   "author": "Noah Anabiik Schwarz",
   "license": "MIT",

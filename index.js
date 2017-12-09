@@ -103,8 +103,6 @@ PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
   if (!opts) opts = {}
   if (!callback) callback = noop
 
-  if (this._offset || this._accu.length) return callback('i am busy')
-
   var self = this
 
   stat(file, opts, function (err, stats) {

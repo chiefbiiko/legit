@@ -28,7 +28,6 @@ tape('zero mutation', function (t) {
   var hashPipe = pipeHash()
   var readStreamA = tar.pack(path.join(__dirname, 'node_modules'))
   var readStreamB = tar.pack(path.join(__dirname, 'node_modules'))
-
   var bufferlistA = []
   var bufferlistB = []
   var pending = 2
@@ -65,8 +64,9 @@ tape('fingerprint hash is a 64 byte buffer by default', function (t) {
 
   hashPipe.on('fingerprint', function (fingerprint) {
 
-    t.ok(Buffer.isBuffer(fingerprint), 'hash is a buffer')
-    t.is(fingerprint.length, 64, 'by default hash should be 64 bytes long')
+    t.ok(Buffer.isBuffer(fingerprint), 'fingerprint is a buffer')
+    t.is(fingerprint.length, 64, 'by default 64 bytes long')
+    t.ok(!fingerprint.equals(Buffer.alloc(64)), 'not a zero-buffer')
 
     t.end()
   })
@@ -77,7 +77,7 @@ tape('PipeHash should be cleared once it emits "fingerprint"', function (t) {
 
   var hashPipe = pipeHash()
   var readStream = fs.createReadStream(__filename)
-  var allZeroWindow = Buffer.alloc(hashPipe._opts.windowSize, 0x00)
+  var zeroBufferWindowSize = Buffer.alloc(hashPipe._opts.windowSize)
 
   readStream.pipe(hashPipe)
 
@@ -85,7 +85,7 @@ tape('PipeHash should be cleared once it emits "fingerprint"', function (t) {
 
     t.ok(hashPipe._offset === 0,
          'offset should be reset to zero')
-    t.ok(hashPipe._window.equals(allZeroWindow),
+    t.ok(hashPipe._window.equals(zeroBufferWindowSize),
          'window should be a zero buffer of length windowSize')
     t.ok(hashPipe._accu.equals(Buffer.alloc(0)),
          'accumulator should be a length-zero buffer')
@@ -99,8 +99,8 @@ tape('PipeHash has a public async fingerprint method', function (t) {
 
   var hashPipeA = pipeHash()
   var hashPipeB = pipeHash()
-
   var readStream = fs.createReadStream(__filename)
+  var zeroBuffer64 = Buffer.alloc(64)
 
   readStream.pipe(zlib.createGzip()).pipe(hashPipeA)
 
@@ -109,6 +109,15 @@ tape('PipeHash has a public async fingerprint method', function (t) {
     hashPipeB.fingerprint(__filename, function (err, fingerprintB) {
       if (err) t.end(err)
 
+      t.ok(Buffer.isBuffer(fingerprintA) &&
+           Buffer.isBuffer(fingerprintB),
+           'fingerprints should be buffers')
+      t.ok(fingerprintA.length === 64 &&
+           fingerprintB.length === 64,
+           'fingerprints should be 64 bytes long')
+      t.ok(!fingerprintA.equals(zeroBuffer64) &&
+           !fingerprintB.equals(zeroBuffer64),
+           'fingerprints should not be zero buffers')
       t.same(fingerprintB, fingerprintA, 'fingerprints should be the same')
 
       t.end()
@@ -120,6 +129,7 @@ tape('PipeHash has a public async fingerprint method', function (t) {
 
 tape('deterministic', function (t) {
 
+  var hashPipe = pipeHash()
   var fingerprints = []
   var pending = 100
 
@@ -140,8 +150,6 @@ tape('deterministic', function (t) {
     }
   }
 
-  for (var i = 0; i < 100; i++) {
-    pipeHash().fingerprint(__filename, onfingerprint)
-  }
+  for (var i = 0; i < 100; i++) hashPipe.fingerprint(__filename, onfingerprint)
 
 })
