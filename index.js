@@ -56,8 +56,8 @@ PipeHash.prototype._chop = function chop (chunk) {
   var chops = []
 
   if (chunk.length > remaining) { // splitting chops to 64KiB, !tail
-    chops.push(chunk.slice(0, boundary))  // push head
-    while (boundary <= chunk.length) {    // push body and tail
+    chops.push(chunk.slice(0, boundary)) // push head
+    while (boundary <= chunk.length) {   // push body and tail
       chops.push(chunk.slice(boundary, boundary + this._opts.windowSize))
       boundary += this._opts.windowSize
     }

@@ -129,7 +129,6 @@ tape('PipeHash has a public async fingerprint method', function (t) {
 
 tape('deterministic', function (t) {
 
-  var hashPipe = pipeHash()
   var fingerprints = []
   var pending = 100
 
@@ -150,6 +149,8 @@ tape('deterministic', function (t) {
     }
   }
 
-  for (var i = 0; i < 100; i++) hashPipe.fingerprint(__filename, onfingerprint)
+  for (var i = 0; i < 100; i++) {
+    pipeHash().fingerprint(__filename, onfingerprint)
+  }
 
 })

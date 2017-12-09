@@ -91,6 +91,8 @@ You can use the stream for both generation and verfication of fingerprints.
 
 For convenience you can generate a fingerpint of a file or directory by using the public `PipeHash.prototype.fingerprint(filepath, opts, callback)` method. It internally processes the input stream indicated by filepath and calls the callback with the resulting fingerprint. Note that by default files are gzipped and directories tossed into a tarball (packed as tar archive and then gzipped) before the hashing stage. You can set `opts` to `{ gzip: false }` to prevent compression before hashing. Knowing whether a fingerprint refers to a compressed or uncompressed buffer is important for successfully verifying fingerprints. Generally, you should just stick to the defaults and use compression when juggling files.
 
+Make sure not to engage one `PipeHash` instance in multple hashing procedures simultaneously as that would lead to data races in the internal buffer window. It is safe to use a single stream for multiple file hashes as long as the operations are performed one after the other. 
+
 ***
 
 ## License
