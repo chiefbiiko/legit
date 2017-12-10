@@ -21,25 +21,24 @@ npm install --save pipe-hash
 
 ``` js
 var fs = require('fs')
-var pipeHash = require('pipe-hash')
+var pipeHash = require('.')
+
+var self = __filename
+var selfie = fs.createReadStream(self)
 var hashPipe = pipeHash()
 
-// consuming a readable, net socket or something
-fs.createReadStream(__filename).pipe(hashPipe)//.pipe(somewhere_else)
-
-// get the fingerprint once the writable side of our hashPipe has finished
-hashPipe.on('fingerprint', function (fingerprint) {
-  console.log('this src file\'s fingerprint:', fingerprint.toString('hex'))
-  // crosscheck against a fingerprint obtained from a trusted source...
-  /*...*/
-})
-
 // high-level way to get a fingerprint from a file or directory
-hashPipe.fingerprint(__dirname, function (err, fingerprint) {
+hashPipe.fingerprint(self, { gzip: false }, function (err, expected) {
   if (err) return console.error(err)
-  console.log(__dirname, 'fingerprint:', fingerprint.toString('hex'))
-  // share the fingerprint with a consumer for subsequent verification...
-  /*...*/
+
+  // another way - consuming a readable, net socket or sim
+  selfie.pipe(hashPipe)//.pipe(somewhere_else)
+
+  // get the fingerprint once the writable side of the hashPipe has finished
+  hashPipe.on('fingerprint', function (actual) {
+    console.log('fingerprints identical?', actual.equals(expected))
+  })
+
 })
 ```
 
@@ -67,7 +66,7 @@ Get a fingerprint from a file or directory. Options default to:
 ``` js
 {
   gzip: true, // gzip file and tar-packed dir streams before hashing?
-  dereference: false // follow symlinks?
+  dereference: false // follow symlinks when fs stating filepath?
 }
 ```
 
@@ -91,7 +90,7 @@ You can use the stream for both generation and verfication of fingerprints.
 
 For convenience you can generate a fingerpint of a file or directory by using the public `PipeHash.prototype.fingerprint(filepath, opts, callback)` method. It internally processes the input stream indicated by filepath and calls the callback with the resulting fingerprint. Note that by default files are gzipped and directories tossed into a tarball (packed as tar archive and then gzipped) before the hashing stage. You can set `opts` to `{ gzip: false }` to prevent compression before hashing. Knowing whether a fingerprint refers to a compressed or uncompressed buffer is important for successfully verifying fingerprints. Generally, you should just stick to the defaults and use compression when juggling files.
 
-Make sure not to engage one `PipeHash` instance in multple hashing procedures simultaneously as that would lead to data races in the internal buffer window. It is safe to use a single stream for multiple file hashes as long as the operations are performed one after the other. 
+Make sure not to engage one `PipeHash` instance in multple hashing procedures simultaneously as that would lead to data races in the internal buffer window. It is safe to use a single stream for multiple file hashes as long as the operations are performed one after the other.
 
 ***
 

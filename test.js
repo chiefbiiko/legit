@@ -154,3 +154,25 @@ tape('deterministic', function (t) {
   }
 
 })
+
+tape('fingerprint from stream and method are the same', function (t) {
+
+  var self = __filename
+  var selfie = fs.createReadStream(self)
+  var hashPipe = pipeHash()
+
+  hashPipe.fingerprint(self, { gzip: false }, function (err, expected) {
+    if (err) t.end(err)
+
+    selfie.pipe(hashPipe)
+
+    hashPipe.on('fingerprint', function (actual) {
+
+      t.ok(actual.equals(expected), 'fingerprints should be identical')
+
+      t.end()
+    })
+
+  })
+
+})
