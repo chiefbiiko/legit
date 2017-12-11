@@ -3,6 +3,7 @@ var fs = require('fs')
 var stream = require('stream')
 var util = require('util')
 var zlib = require('zlib')
+var blake2b = require('blake2b-wasm')
 var pump = require('pump')
 var tar = require('tar-fs')
 
@@ -23,9 +24,13 @@ function PipeHash (opts, callback) {
 
   if (!callback) callback = noop
   if (!opts) opts = {}
+
   this._opts = opts
-  this._opts.hash = opts.hash || 'sha512'               // sha512 by default
   this._opts.windowSize = 1024 * (opts.windowKiB || 64) // 64KiB by default
+  // hash: custom std crypto hash, or 1st default blake2b, 2nd default sha512
+  this._opts.hash = opts.hash || blake2b.SUPPORTED ? 'blake2b' : 'sha512'
+  this._opts.blake2bDigestLength = opts.blake2bDigestLength || 32
+  this._blake2b_READY = false
 
   this._window = Buffer.alloc(this._opts.windowSize)    // window
   this._offset = 0                                      // write offset in win
@@ -38,6 +43,15 @@ function PipeHash (opts, callback) {
     this.emit('fingerprint', fingerprint)
     callback(null, fingerprint)
   })
+
+  var self = this
+
+  if (this._opts.hash === 'blake2b') {
+    blake2b.ready(function (err) {
+      if (err) throw err
+      self._blake2b_READY = true
+    })
+  }
 
 }
 
@@ -85,7 +99,12 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
 }
 
 PipeHash.prototype._hash = function hash (buf) {
-  return crypto.createHash(this._opts.hash).update(buf).digest()
+  if (this._opts.hash === 'blake2b' && this._blake2b_READY)
+    return blake2b(this._opts.blake2bDigestLength).update(buf).digest()
+  else if (this._opts.hash === 'blake2b' && !this._blake2b_READY)
+    throw new Error('blake2b-wasm module is not ready yet :(')
+  else
+    return crypto.createHash(this._opts.hash).update(buf).digest()
 }
 
 PipeHash.prototype._clear = function clear (everything) {

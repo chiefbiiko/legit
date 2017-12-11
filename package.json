@@ -1,6 +1,6 @@
 {
   "name": "pipe-hash",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A stream that fingerprints its passthru on the fly",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,8 @@
     "stream",
     "pipe",
     "fingerprint",
-    "checksum"
+    "checksum",
+    "blake2b"
   ],
   "author": "Noah Anabiik Schwarz",
   "license": "MIT",
@@ -31,6 +32,7 @@
     "tape": "^4.8.0"
   },
   "dependencies": {
+    "blake2b-wasm": "^1.1.4",
     "pump": "^2.0.0",
     "tar-fs": "^1.16.0"
   }

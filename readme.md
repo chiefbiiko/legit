@@ -21,22 +21,22 @@ npm install --save pipe-hash
 
 ``` js
 var fs = require('fs')
-var pipeHash = require('.')
+var pipeHash = require('pipe-hash')
 
 var self = __filename
 var selfie = fs.createReadStream(self)
 var hashPipe = pipeHash()
 
 // high-level way to get a fingerprint from a file or directory
-hashPipe.fingerprint(self, { gzip: false }, function (err, expected) {
+hashPipe.fingerprint(self, { gzip: false }, function (err, fingerprintA) {
   if (err) return console.error(err)
 
   // another way - consuming a readable, net socket or sim
   selfie.pipe(hashPipe)//.pipe(somewhere_else)
 
   // get the fingerprint once the writable side of the hashPipe has finished
-  hashPipe.on('fingerprint', function (actual) {
-    console.log('fingerprints identical?', actual.equals(expected))
+  hashPipe.on('fingerprint', function (fingerprintB) {
+    console.log('fingerprints identical?', fingerprintB.equals(fingerprintA))
   })
 
 })
@@ -52,12 +52,15 @@ Create a new `PipeHash` instance. Options default to:
 
 ``` js
 {
-  hash: 'sha512', // any name of crypto's hash functions
+  hash: 'blake2b', // blake2b or any name of crypto's hash functions
+  blake2bDigestLength: 32, // passed on to blake2b-wasm
   windowKiB: 64   // size of the sliding window in KiB
 }
 ```
 
 The callback will be called after the writable side of the stream has finished and has the standard signature `callback(err, fingerprint)`. The fingerprint is a buffer.
+
+The fabolous `blake2b-wasm` module by [mafintosh](https://github.com/mafintosh) implements `blake2b` in `WebAssembly` which allows fast hashing.
 
 ### `hashPipe.fingerprint(filepath[, opts], callback)`
 

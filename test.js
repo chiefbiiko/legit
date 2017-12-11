@@ -55,7 +55,7 @@ tape('zero mutation', function (t) {
 
 })
 
-tape('fingerprint hash is a 64 byte buffer by default', function (t) {
+tape('fingerprint hash is a 32 byte buffer by default', function (t) {
 
   var hashPipe = pipeHash()
   var readStream = fs.createReadStream(__filename)
@@ -65,8 +65,8 @@ tape('fingerprint hash is a 64 byte buffer by default', function (t) {
   hashPipe.on('fingerprint', function (fingerprint) {
 
     t.ok(Buffer.isBuffer(fingerprint), 'fingerprint is a buffer')
-    t.is(fingerprint.length, 64, 'by default 64 bytes long')
-    t.ok(!fingerprint.equals(Buffer.alloc(64)), 'not a zero-buffer')
+    t.is(fingerprint.length, 32, 'by default 32 bytes long')
+    t.ok(!fingerprint.equals(Buffer.alloc(32)), 'not a zero-buffer')
 
     t.end()
   })
@@ -100,7 +100,7 @@ tape('PipeHash has a public async fingerprint method', function (t) {
   var hashPipeA = pipeHash()
   var hashPipeB = pipeHash()
   var readStream = fs.createReadStream(__filename)
-  var zeroBuffer64 = Buffer.alloc(64)
+  var zeroBuffer32 = Buffer.alloc(32)
 
   readStream.pipe(zlib.createGzip()).pipe(hashPipeA)
 
@@ -112,11 +112,11 @@ tape('PipeHash has a public async fingerprint method', function (t) {
       t.ok(Buffer.isBuffer(fingerprintA) &&
            Buffer.isBuffer(fingerprintB),
            'fingerprints should be buffers')
-      t.ok(fingerprintA.length === 64 &&
-           fingerprintB.length === 64,
-           'fingerprints should be 64 bytes long')
-      t.ok(!fingerprintA.equals(zeroBuffer64) &&
-           !fingerprintB.equals(zeroBuffer64),
+      t.ok(fingerprintA.length === 32 &&
+           fingerprintB.length === 32,
+           'fingerprints should be 32 bytes long')
+      t.ok(!fingerprintA.equals(zeroBuffer32) &&
+           !fingerprintB.equals(zeroBuffer32),
            'fingerprints should not be zero buffers')
       t.same(fingerprintB, fingerprintA, 'fingerprints should be the same')
 
