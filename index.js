@@ -9,8 +9,8 @@ var tar = require('tar-fs')
 
 function noop () {}
 
-function stat (entry, _opts, cb) {
-  _opts.dereference ? fs.stat(entry, cb) : fs.lstat(entry, cb)
+function stat (entry, opts, cb) {
+  opts.dereference ? fs.stat(entry, cb) : fs.lstat(entry, cb)
 }
 
 function PipeHash (opts, callback) {
@@ -26,12 +26,13 @@ function PipeHash (opts, callback) {
   if (!opts) opts = {}
 
   this._opts = opts
-  this._opts.windowSize = 1024 * (opts.windowKiB || 64) // 64KiB by default
+
   // hash: custom std crypto hash, or 1st default blake2b, 2nd default sha512
   this._opts.hash = opts.hash || blake2b.SUPPORTED ? 'blake2b' : 'sha512'
-  this._opts.blake2bDigestLength = opts.blake2bDigestLength || 32
+  this._opts.blake2bDigestLength = opts.blake2bDigestLength || 64
   this._blake2b_READY = false
 
+  this._opts.windowSize = 1024 * (opts.windowKiB || 64) // 64KiB by default
   this._window = Buffer.alloc(this._opts.windowSize)    // window
   this._offset = 0                                      // write offset in win
   this._accu = Buffer.alloc(0)                          // rolling hash buffer
@@ -58,7 +59,7 @@ function PipeHash (opts, callback) {
 util.inherits(PipeHash, stream.Transform)
 
 PipeHash.prototype._transform = function transform (chunk, _, next) {
-  this.push(chunk) // identity
+  this.push(chunk) // passthru
   // chop, then copy to window and maybe hash and flush
   this._copyAndMaybeHash(this._chop(chunk))
   next()

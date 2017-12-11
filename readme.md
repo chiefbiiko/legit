@@ -19,6 +19,8 @@ npm install --save pipe-hash
 
 ## Usage
 
+Simply pipe thru a `PipeHash` instance or call its `.fingerprint` method.
+
 ``` js
 var fs = require('fs')
 var pipeHash = require('pipe-hash')
@@ -42,6 +44,8 @@ hashPipe.fingerprint(self, { gzip: false }, function (err, fingerprintA) {
 })
 ```
 
+Make sure not to engage a `PipeHash` instance in multiple fingerprinting operations simultaneously. That would lead to data races and wrong fingerprints.
+
 ***
 
 ## API
@@ -53,7 +57,7 @@ Create a new `PipeHash` instance. Options default to:
 ``` js
 {
   hash: 'blake2b', // blake2b or any name of crypto's hash functions
-  blake2bDigestLength: 32, // passed on to blake2b-wasm
+  blake2bDigestLength: 64, // passed on to blake2b-wasm
   windowKiB: 64   // size of the sliding window in KiB
 }
 ```
