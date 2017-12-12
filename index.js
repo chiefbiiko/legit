@@ -66,18 +66,17 @@ PipeHash.prototype._transform = function transform (chunk, _, next) {
 }
 
 PipeHash.prototype._chop = function chop (chunk) {
-  var remaining = this._opts.windowSize - this._offset
-  var boundary = remaining
-  var chops = []
+  var size = this._opts.windowSize
+  var boundary = size - (this._offset || 0)
+  var chops = new Array(Math.ceil(chunk.length / size))
 
-  if (chunk.length > remaining) { // splitting chops to 64KiB, !tail
-    chops.push(chunk.slice(0, boundary)) // push head
-    while (boundary <= chunk.length) {   // push body and tail
-      chops.push(chunk.slice(boundary, boundary + this._opts.windowSize))
-      boundary += this._opts.windowSize
+  if (chunk.length > boundary) {
+    chops[0] = chunk.slice(0, boundary) // push head, then body and tail
+    for (var i = 1; boundary < chunk.length; i++, boundary += size) {
+      chops[i] = chunk.slice(boundary, boundary + size)
     }
   } else {
-    chops.push(chunk)
+    chops[0] = chunk
   }
 
   return chops
