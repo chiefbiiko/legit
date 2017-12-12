@@ -31,6 +31,7 @@ function PipeHash (opts, callback) {
   this._opts.hash = opts.hash || blake2b.SUPPORTED ? 'blake2b' : 'sha512'
   this._opts.blake2bDigestLength = opts.blake2bDigestLength || 64
   this._blake2b_READY = false
+  this._blake2b = this._opts.hash === 'blake2b'
 
   this._opts.windowSize = 1024 * (opts.windowKiB || 64) // 64KiB by default
   this._window = Buffer.alloc(this._opts.windowSize)    // window
@@ -67,7 +68,7 @@ PipeHash.prototype._transform = function transform (chunk, _, next) {
 
 PipeHash.prototype._chop = function chop (chunk) {
   var size = this._opts.windowSize
-  var boundary = size - (this._offset || 0)
+  var boundary = size - this._offset
   var chops = new Array(Math.ceil(chunk.length / size))
 
   if (chunk.length > boundary) {
@@ -99,9 +100,9 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
 }
 
 PipeHash.prototype._hash = function hash (buf) {
-  if (this._opts.hash === 'blake2b' && this._blake2b_READY)
+  if (this._blake2b && this._blake2b_READY)
     return blake2b(this._opts.blake2bDigestLength).update(buf).digest()
-  else if (this._opts.hash === 'blake2b' && !this._blake2b_READY)
+  else if (this._blake2b && !this._blake2b_READY)
     throw new Error('blake2b-wasm module is not ready yet :(')
   else
     return crypto.createHash(this._opts.hash).update(buf).digest()

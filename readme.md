@@ -25,12 +25,12 @@ Simply pipe thru a `PipeHash` instance or call its `.fingerprint` method.
 var fs = require('fs')
 var pipeHash = require('pipe-hash')
 
-var self = __filename
-var selfie = fs.createReadStream(self)
+var file = __filename
+var selfie = fs.createReadStream(file)
 var hashPipe = pipeHash()
 
 // high-level way to get a fingerprint from a file or directory
-hashPipe.fingerprint(self, { gzip: false }, function (err, fingerprintA) {
+hashPipe.fingerprint(file, { gzip: false }, function (err, fingerprintA) {
   if (err) return console.error(err)
 
   // another way - consuming a readable, net socket or sim
