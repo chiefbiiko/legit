@@ -13,6 +13,13 @@ function stat (entry, opts, cb) {
   opts.dereference ? fs.stat(entry, cb) : fs.lstat(entry, cb)
 }
 
+function xor (a, b) {
+  var length = Math.max(a.length, b.length)
+  var buf = Buffer.alloc(length)
+  for (var i = 0; i < length; i++) buf[i] = a[i] ^ b[i]
+  return buf
+}
+
 function PipeHash (opts, callback) {
   if (!(this instanceof PipeHash)) return new PipeHash(opts, callback)
   stream.Transform.call(this)
@@ -89,10 +96,7 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
 
     // maybe hash and clear window
     if (this._offset === this._opts.windowSize) {
-      var cur = this._hash(this._window)
-      this._accu = this._hash(
-        Buffer.concat([ this._accu, cur ], this._accu.length + cur.length)
-      )
+      this._accu = xor(this._accu, this._hash(this._window))
       this._clear()
     }
 

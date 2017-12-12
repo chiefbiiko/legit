@@ -1,6 +1,6 @@
 {
   "name": "pipe-hash",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A stream that fingerprints its passthru on the fly",
   "main": "index.js",
   "scripts": {
