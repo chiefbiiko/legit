@@ -32,7 +32,7 @@ function PipeHash (opts, callback) {
   if (!callback) callback = noop
   if (!opts) opts = {}
 
-  this._opts = opts
+  this._opts = {}
 
   // hash: custom std crypto hash, or 1st default blake2b, 2nd default sha512
   this._opts.hash = opts.hash || blake2b.SUPPORTED ? 'blake2b' : 'sha512'
