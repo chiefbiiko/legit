@@ -14,9 +14,9 @@ function stat (entry, opts, cb) {
 }
 
 function xor (a, b) {
-  var length = Math.max(a.length, b.length)
-  var buf = Buffer.alloc(length)
-  for (var i = 0; i < length; i++) buf[i] = a[i] ^ b[i]
+  var len = Math.max(a.length, b.length)
+  var buf = Buffer.alloc(len)
+  for (var i = 0; i < len; i++) buf[i] = a[i] ^ b[i]
   return buf
 }
 
@@ -36,9 +36,14 @@ function PipeHash (opts, callback) {
 
   // hash: custom std crypto hash, or 1st default blake2b, 2nd default sha512
   this._opts.hash = opts.hash || blake2b.SUPPORTED ? 'blake2b' : 'sha512'
-  this._opts.blake2bDigestLength = opts.blake2bDigestLength || 64
-  this._blake2b_READY = false
   this._blake2b = this._opts.hash === 'blake2b'
+  this._blake2b_READY = false
+  this._opts.blake2bArgs = [
+    opts.blake2bDigestLength || 64,
+    opts.blake2bKey || null,
+    opts.blake2bSalt || null,
+    opts.blake2bPersonal || null
+  ]
 
   this._opts.windowSize = 1024 * (opts.windowKiB || 64) // 64KiB by default
   this._window = Buffer.alloc(this._opts.windowSize)    // window
@@ -105,11 +110,11 @@ PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
 
 PipeHash.prototype._hash = function hash (buf) {
   if (this._blake2b && this._blake2b_READY)
-    return blake2b(this._opts.blake2bDigestLength).update(buf).digest()
-  else if (this._blake2b && !this._blake2b_READY)
-    throw new Error('blake2b-wasm module is not ready yet :(')
-  else
+    return blake2b.apply(null, this._opts.blake2bArgs).update(buf).digest()
+  else if (!this._blake2b)
     return crypto.createHash(this._opts.hash).update(buf).digest()
+  else
+    throw new Error('blake2b-wasm module is not ready yet :(')
 }
 
 PipeHash.prototype._clear = function clear (everything) {

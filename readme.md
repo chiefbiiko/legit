@@ -57,8 +57,11 @@ Create a new `PipeHash` instance. Options default to:
 ``` js
 {
   hash: 'blake2b', // blake2b or any name of crypto's hash functions
-  blake2bDigestLength: 64, // passed on to blake2b-wasm
-  windowKiB: 64   // size of the sliding window in KiB
+  blake2bDigestLength: 64, // these get passed on to blake2b-wasm
+  blake2bKey: null,
+  blake2bSalt: null,
+  blake2bPersonal: null,
+  windowKiB: 64 // size of the sliding window/internal buffer in KiB
 }
 ```
 
