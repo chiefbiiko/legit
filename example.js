@@ -1,5 +1,5 @@
 var fs = require('fs')
-var pipeHash = require('.')
+var pipeHash = require('./index')
 
 var file = __filename
 var selfie = fs.createReadStream(file)
@@ -14,6 +14,8 @@ hashPipe.fingerprint(file, { gzip: false }, function (err, expected) {
 
   // get the fingerprint once the writable side of our hashPipe has finished
   hashPipe.on('fingerprint', function (actual) {
+    console.log('expected:\n', expected.toString('hex'))
+    console.log('actual:\n', actual.toString('hex'))
     console.log('fingerprints identical?', actual.equals(expected))
   })
 
