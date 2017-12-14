@@ -95,8 +95,8 @@ PipeHash.prototype._chop = function chop (chunk) {
 }
 
 PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
-  chops.forEach(function (chop) { // by default chops are at most of size 64KiB
-    this._offset = chop.copy(this._window, this._offset) + this._offset
+  chops.forEach(function (chop) { // chops are sized
+    this._offset += chop.copy(this._window, this._offset)
 
     // maybe hash and clear window
     if (this._offset === this._opts.windowSize) {
@@ -118,7 +118,7 @@ PipeHash.prototype._hash = function hash (buf) {
 
 PipeHash.prototype._clear = function clear (everything) {
   if (everything) this._accu = Buffer.alloc(0)
-  this._window.fill(0x00) // clearing window & resetting write offset
+  this._window.fill(0x00)
   this._offset = 0
 }
 
