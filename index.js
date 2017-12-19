@@ -35,7 +35,7 @@ function PipeHash (opts, callback) {
   this._opts = {}
 
   // hash: custom std crypto hash, or 1st default blake2b, 2nd default sha512
-  this._opts.hash = opts.hash || blake2b.SUPPORTED ? 'blake2b' : 'sha512'
+  this._opts.hash = opts.hash || (blake2b.SUPPORTED ? 'blake2b' : 'sha512')
   this._blake2b = this._opts.hash === 'blake2b'
   this._blake2b_READY = false
   this._opts.blake2bArgs = [
