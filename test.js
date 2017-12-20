@@ -73,6 +73,19 @@ tape('fingerprint hash is a 64 byte buffer by default', function (t) {
 
 })
 
+tape('allows choosing the hash function', function (t) {
+
+  var hashPipe = pipeHash({ hash: 'sha256' })
+  
+  hashPipe.fingerprint(__filename, function (err, fingerprint) {
+    
+    t.is(fingerprint.length, 32, 'sha256 fingerprint should be 32 bytes long')
+
+    t.end()
+  })
+
+})
+
 tape('PipeHash should be cleared once it emits "fingerprint"', function (t) {
 
   var hashPipe = pipeHash()
