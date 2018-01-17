@@ -51,12 +51,16 @@ function PipeHash (opts, callback) {
   this._accu = Buffer.alloc(0)                          // rolling hash buffer
 
   this.on('finish', function () { // total stream payload shorter than win?
-    this._done(callback)
+    if (!this._accu.length) this._accu = this._hash(this._window)
+    var fingerprint = Buffer.from(this._accu)
+    this._clear(true)
+    this.emit('fingerprint', fingerprint)
+    callback(null, fingerprint)
   })
 
   var self = this
 
-  if (this._blake2b) {
+  if (this._opts.hash === 'blake2b') {
     blake2b.ready(function (err) {
       if (err) throw err
       self._blake2b_READY = true
@@ -69,59 +73,53 @@ util.inherits(PipeHash, stream.Transform)
 
 PipeHash.prototype._transform = function transform (chunk, _, next) {
   this.push(chunk) // passthru
-  this._process(chunk)
+  // chop, then copy to window and maybe hash and flush
+  this._copyAndMaybeHash(this._chop(chunk))
   next()
 }
 
-PipeHash.prototype._process = function process (chunk) {
-  var start = this._opts.windowSize - this._offset
-  var numChops = Math.ceil(chunk.length / this._opts.windowSize)
-  var end
+PipeHash.prototype._chop = function chop (chunk) {
+  var boundary = this._opts.windowSize - this._offset
+  var chops = new Array(Math.ceil(chunk.length / this._opts.windowSize))
 
-  if (chunk.length > start) {
-    this._offset += chunk.slice(0, start).copy(this._window, this._offset)
-    this._maybeHashAndClear()
-    for (var i = 1; i < numChops; i++) {
-      end = start + this._opts.windowSize
-      this._offset += chunk.slice(start, end).copy(this._window, this._offset)
-      this._maybeHashAndClear()
-      start = end
+  if (chunk.length > boundary) {
+    chops[0] = chunk.slice(0, boundary) // push head, then body and tail
+    for (var i = 1; i < chops.length; i++, boundary += this._opts.windowSize) {
+      chops[i] = chunk.slice(boundary, boundary + this._opts.windowSize)
     }
   } else {
-    this._offset += chunk.copy(this._window, this._offset)
-    this._maybeHashAndClear()
+    chops[0] = chunk
   }
+
+  return chops
 }
 
-PipeHash.prototype._maybeHashAndClear = function maybeHashAndClear () {
-  if (this._offset === this._opts.windowSize) {
-    this._accu = xor(this._accu, this._hash(this._window))
-    this._clear()
-  }
+PipeHash.prototype._copyAndMaybeHash = function copyAndMaybeHash (chops) {
+  chops.forEach(function (chop) { // chops are sized
+    this._offset += chop.copy(this._window, this._offset)
+
+    // maybe hash and clear window
+    if (this._offset === this._opts.windowSize) {
+      this._accu = xor(this._accu, this._hash(this._window))
+      this._clear()
+    }
+
+  }, this)
 }
 
 PipeHash.prototype._hash = function hash (buf) {
-  if (this._blake2b && this._blake2b_READY) {
+  if (this._blake2b && this._blake2b_READY)
     return blake2b.apply(null, this._opts.blake2bArgs).update(buf).digest()
-  } else if (!this._blake2b) {
+  else if (!this._blake2b)
     return crypto.createHash(this._opts.hash).update(buf).digest()
-  } else {
-    throw Error('blake2b-wasm module is not ready yet :(')
-  }
+  else
+    throw new Error('blake2b-wasm module is not ready yet :(')
 }
 
 PipeHash.prototype._clear = function clear (everything) {
   if (everything) this._accu = Buffer.alloc(0)
   this._window.fill(0x00)
   this._offset = 0
-}
-
-PipeHash.prototype._done = function done (callback) {
-  if (!this._accu.length) this._accu = this._hash(this._window)
-  var fingerprint = Buffer.from(this._accu)
-  this._clear(true)
-  this.emit('fingerprint', fingerprint)
-  callback(null, fingerprint)
 }
 
 PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
@@ -151,15 +149,17 @@ PipeHash.prototype.fingerprint = function fingerprint (file, opts, callback) {
     } else {
       tail = readStream
       tail.on('error', tail.destroy)
-      tail.on('end', tail.destroy)
     }
 
     tail.on('data', function (chunk) {
-      self._process(chunk)
+      self._copyAndMaybeHash(self._chop(chunk))
     })
 
     tail.on('end', function () {
-      self._done(callback)
+      if (!self._accu.length) self._accu = self._hash(self._window)
+      var fingerprint = Buffer.from(self._accu)
+      self._clear(true)
+      callback(null, fingerprint)
     })
 
   })

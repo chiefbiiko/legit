@@ -5,6 +5,7 @@ var concat = require('concat-stream')
 var tar = require('tar-fs')
 var tape = require('tape')
 var pipeHash = require('./index')
+var old = require('./old_index')
 
 tape('PipeHash is a simple passthru/identity stream', function (t) {
 
@@ -76,9 +77,9 @@ tape('fingerprint hash is a 64 byte buffer by default', function (t) {
 tape('allows choosing the hash function', function (t) {
 
   var hashPipe = pipeHash({ hash: 'sha256' })
-  
+
   hashPipe.fingerprint(__filename, function (err, fingerprint) {
-    
+
     t.is(fingerprint.length, 32, 'sha256 fingerprint should be 32 bytes long')
 
     t.end()
@@ -186,6 +187,43 @@ tape('fingerprint from stream and method are the same', function (t) {
       t.end()
     })
 
+  })
+
+})
+
+tape('new stream implementation should work like ancestor', function (t) {
+
+  var a = pipeHash()
+  var b = old()
+
+  fs.createReadStream(__filename).pipe(a)
+
+  a.on('fingerprint', function (fingerprintA) {
+    fs.createReadStream(__filename).pipe(b)
+    b.on('fingerprint', function (fingerprintB) {
+
+      t.true(fingerprintB.equals(fingerprintA), 'stream fingerprints equal')
+      t.end()
+
+    })
+  })
+
+})
+
+tape('new method implementation should work like ancestor', function (t) {
+
+  var a = pipeHash()
+  var b = old()
+
+  a.fingerprint(__dirname, function (err, fingerprintA) {
+    if (err) t.end(err)
+    b.fingerprint(__dirname, function (err, fingerprintB) {
+      if (err) t.end(err)
+
+      t.true(fingerprintB.equals(fingerprintA), 'method fingerprints equal')
+
+      t.end()
+    })
   })
 
 })
