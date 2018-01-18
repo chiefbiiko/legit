@@ -27,18 +27,18 @@ var pipeHash = require('pipe-hash')
 
 var file = __filename
 var selfie = fs.createReadStream(file)
-var hashPipe = pipeHash()
+var hashpipe = pipeHash()
 
 // high-level way to get a fingerprint from a file or directory
-hashPipe.fingerprint(file, { gzip: false }, function (err, fingerprintA) {
+hashpipe.fingerprint(file, { gzip: false }, function (err, fingerprintA) {
   if (err) return console.error(err)
 
   // another way - consuming a readable, net socket or sim
-  selfie.pipe(hashPipe)//.pipe(somewhere_else)
+  selfie.pipe(hashpipe)//.pipe(somewhere_else)
 
-  // get the fingerprint once the writable side of the hashPipe has finished
-  hashPipe.on('fingerprint', function (fingerprintB) {
-    console.log('fingerprints identical?', fingerprintB.equals(fingerprintA))
+  // get the fingerprint once the writable side of the hashpipe has finished
+  hashpipe.on('fingerprint', function (fingerprintB) {
+    console.log('fingerprints equal?', fingerprintB.equals(fingerprintA))
   })
 
 })
@@ -50,7 +50,7 @@ Make sure not to engage a `PipeHash` instance in multiple fingerprinting operati
 
 ## API
 
-### `var hashPipe = pipeHash([opts][, callback])`
+### `var hashpipe = pipeHash([opts][, callback])`
 
 Create a new `PipeHash` instance. Options default to:
 
@@ -69,7 +69,7 @@ The callback will be called after the writable side of the stream has finished a
 
 The fabolous `blake2b-wasm` module by [mafintosh](https://github.com/mafintosh) implements `blake2b` in `WebAssembly` which allows fast hashing.
 
-### `hashPipe.fingerprint(filepath[, opts], callback)`
+### `hashpipe.fingerprint(filepath[, opts], callback)`
 
 Get a fingerprint from a file or directory. Options default to:
 
@@ -82,7 +82,7 @@ Get a fingerprint from a file or directory. Options default to:
 
 The callback has the signature `callback(err, fingerprint)` and will be called once the entire file/directory has been hashed. The fingerprint is a buffer.
 
-### `hashPipe.on('fingerprint', callback)`
+### `hashpipe.on('fingerprint', callback)`
 
 Emitted once the writable side of the stream has finished. The callback has the signature `callback(fingerprint)`. The fingerprint is a buffer.
 
@@ -98,7 +98,7 @@ A `PipeHash` instance emits a fingerprint once its writable side has finished. A
 
 You can use the stream for both generation and verfication of fingerprints.
 
-For convenience you can generate a fingerpint of a file or directory by using the public `PipeHash.prototype.fingerprint(filepath, opts, callback)` method. It internally processes the input stream indicated by filepath and calls the callback with the resulting fingerprint. Note that by default files are gzipped and directories tossed into a tarball (packed as tar archive and then gzipped) before the hashing stage. You can set `opts` to `{ gzip: false }` to prevent compression before hashing. Knowing whether a fingerprint refers to a compressed or uncompressed buffer is important for successfully verifying fingerprints. Generally, you should just stick to the defaults and use compression when juggling files.
+For convenience you can generate a fingerpint of a file or directory by using the public `PipeHash.prototype.fingerprint` method. It internally processes the input stream indicated by filepath and calls the callback with the resulting fingerprint. Note that by default files are gzipped and directories tossed into a tarball (packed as tar archive and then gzipped) before the hashing stage. You can set `opts` to `{ gzip: false }` to prevent compression before hashing. Knowing whether a fingerprint refers to a compressed or uncompressed buffer is important for successfully verifying fingerprints. Generally, you should just stick to the defaults and use compression when juggling files.
 
 Make sure not to engage one `PipeHash` instance in multple hashing procedures simultaneously as that would lead to data races in the internal buffer window. It is safe to use a single stream for multiple file hashes as long as the operations are performed one after the other.
 
